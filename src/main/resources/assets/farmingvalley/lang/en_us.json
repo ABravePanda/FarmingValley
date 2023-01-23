@@ -1,0 +1,19 @@
+{
+  "item.farmingvalley.seed_bag" : "Seed Bag",
+
+  "item.farmingvalley.cauliflower_seeds" : "Cauliflower Seeds",
+  "item.farmingvalley.garlic_seeds" : "Garlic Seeds",
+  "item.farmingvalley.parsnip_seeds" : "Parsnip Seeds",
+
+  "tooltip.farmingvalley.seasons.SPRING" : "§aSpring",
+  "tooltip.farmingvalley.seasons.SUMMER" : "§eSummer",
+  "tooltip.farmingvalley.seasons.FALL" : "§cFall",
+  "tooltip.farmingvalley.seasons.WINTER" : "§bWinter",
+
+  "tooltip.farmingvalley.growthdays" : "§7Days:",
+
+
+  "sounds.farmingvalley.rooster" : "Rooster Crow Sound",
+
+  "itemGroup.seeds" : "Farming Valley - Seeds"
+}
