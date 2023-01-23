@@ -3,6 +3,7 @@ package com.tompkins_development.forge.farming_valley.events;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tompkins_development.forge.farming_valley.FarmingValleyMod;
 import com.tompkins_development.forge.farming_valley.blocks.ModBlocks;
+import com.tompkins_development.forge.farming_valley.capabilities.coins.CoinsCapabilityProvider;
 import com.tompkins_development.forge.farming_valley.capabilities.season.SeasonCapabilityProvider;
 import com.tompkins_development.forge.farming_valley.capabilities.season.SeasonInstance;
 import com.tompkins_development.forge.farming_valley.capabilities.sleeping.SleepingCapabilityProvider;
@@ -14,6 +15,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -100,13 +102,12 @@ public class BlockPlaceModEvent {
 //            seasonAndDay.compute(serverLevel.getDataStorage());
 //        }
 
-//        @SubscribeEvent
-//        public static void onWorldTick(TickEvent.WorldTickEvent event) {
-//            if(event.side == LogicalSide.CLIENT) return;
-//            event.world.getCapability(SleepingCapabilityProvider.SLEEPING).ifPresent(seasonProvider -> {
-//                System.out.println(seasonProvider.getSleeping());
-//            });
-//        }
+        @SubscribeEvent
+        public static void onWorldTick(TickEvent.WorldTickEvent event) {
+            if(event.side == LogicalSide.CLIENT) return;
+            ServerLevel level = (ServerLevel) event.world;
+            SeasonInstance.updateTime(level);
+        }
 
 
 //
@@ -115,14 +116,20 @@ public class BlockPlaceModEvent {
             if(Keybinds.KEY_GUI.isDown()) {
                 //Minecraft.getInstance().setScreen(new CustomScreen(new TextComponent("Shit")));
                 //Minecraft.getInstance().player.startSleepInBed(Minecraft.getInstance().player.getSleepingPos().get());
+                Minecraft.getInstance().player.getLevel().getCapability(CoinsCapabilityProvider.COINS).ifPresent(coinProvider -> {
+                    coinProvider.setBalance(coinProvider.getBalance()+1);
+                });
             }
         }
 
         @SubscribeEvent
         public static void onRender(RenderGameOverlayEvent event) {
-            Minecraft.getInstance().font.draw(new PoseStack(), "Season: " + SeasonInstance.season.getKey(), 0, 3, Color.white.getRGB());
-            Minecraft.getInstance().font.draw(new PoseStack(), "Day: " + SeasonInstance.day, 0, 12, Color.white.getRGB());
-
+            Minecraft.getInstance().font.draw(new PoseStack(), "Season: " + SeasonInstance.getSeason(), 2, 3, Color.white.getRGB());
+            Minecraft.getInstance().font.draw(new PoseStack(), "Day: " + SeasonInstance.day, 2, 12, Color.white.getRGB());
+            Minecraft.getInstance().font.draw(new PoseStack(), "Time: " + SeasonInstance.time, 2, 21, Color.white.getRGB());
+            Minecraft.getInstance().player.getLevel().getCapability(CoinsCapabilityProvider.COINS).ifPresent(coinProvider -> {
+                Minecraft.getInstance().font.draw(new PoseStack(), "Coins: " + coinProvider.getBalance(), 2, 30, Color.white.getRGB());
+            });
         }
 
         @SubscribeEvent
@@ -134,22 +141,6 @@ public class BlockPlaceModEvent {
             });
         }
 
-
-        @SubscribeEvent
-        public static void attach(final AttachCapabilitiesEvent<Level> event) {
-            if(!event.getObject().getCapability(SeasonCapabilityProvider.SEASON_AND_DAY).isPresent()) {
-                event.addCapability(new ResourceLocation(FarmingValleyMod.MOD_ID, "season"), new SeasonCapabilityProvider());
-            }
-            if(!event.getObject().getCapability(SleepingCapabilityProvider.SLEEPING).isPresent()) {
-                event.addCapability(new ResourceLocation(FarmingValleyMod.MOD_ID, "sleeping"), new SleepingCapabilityProvider());
-            }
-        }
-
-        @SubscribeEvent
-        public static void register(RegisterCapabilitiesEvent event) {
-            event.register(SeasonCapabilityProvider.class);
-            event.register(SleepingCapabilityProvider.class);
-        }
 
         //
         @SubscribeEvent
@@ -221,20 +212,19 @@ public class BlockPlaceModEvent {
             });
         }
 //
-//        @SubscribeEvent
-//        public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-//            System.out.println(FarmingValleyMod.days);
-//            if(event.side != LogicalSide.SERVER) return;
-//            ServerPlayer player = (ServerPlayer) event.player;
-//            ServerLevel level = (ServerLevel) event.player.getLevel();
-//
-//            if(level.dayTime() >= 18000 && level.dayTime() < 23500) {
-//                BlockPos pos = player.getRespawnPosition();
-//                player.connection.teleport(pos.getX(), pos.getY(), pos.getZ(),0, 0);
-//                //player.startSleepInBed(pos);
-//                player.startSleeping(pos);
-//            }
-//        }
+        @SubscribeEvent
+        public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
+            if(event.side != LogicalSide.SERVER) return;
+            ServerPlayer player = (ServerPlayer) event.player;
+            ServerLevel level = (ServerLevel) event.player.getLevel();
+
+            if(level.dayTime() >= 18000 && level.dayTime() < 23500) {
+                BlockPos pos = player.getRespawnPosition();
+                player.connection.teleport(pos.getX(), pos.getY(), pos.getZ(),0, 0);
+                player.startSleepInBed(pos);
+                //player.startSleeping(pos);
+            }
+        }
 
 
 
