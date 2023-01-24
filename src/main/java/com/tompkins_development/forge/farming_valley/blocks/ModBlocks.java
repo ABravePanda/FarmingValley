@@ -1,10 +1,12 @@
 package com.tompkins_development.forge.farming_valley.blocks;
 
 import com.tompkins_development.forge.farming_valley.FarmingValleyMod;
+import com.tompkins_development.forge.farming_valley.blocks.custom.ShippingCrateBlock;
 import com.tompkins_development.forge.farming_valley.blocks.plants.CauliflowerPlantBlock;
 import com.tompkins_development.forge.farming_valley.blocks.plants.GarlicPlantBlock;
 import com.tompkins_development.forge.farming_valley.blocks.plants.ParsnipPlantBlock;
 import com.tompkins_development.forge.farming_valley.items.ModItems;
+import com.tompkins_development.forge.farming_valley.items.tabs.ModCreativeModeTabs;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
@@ -36,6 +38,8 @@ public class ModBlocks {
             () -> new GarlicPlantBlock(BlockBehaviour.Properties.copy(Blocks.WHEAT).strength(0.1f).noOcclusion()));
     public static final RegistryObject<Block> CAULIFLOWER_PLANT = registerBlockWithoutItem("cauliflower_plant",
             () -> new CauliflowerPlantBlock(BlockBehaviour.Properties.copy(Blocks.WHEAT).strength(0.1f).noOcclusion()));
+    public static final RegistryObject<Block> SHIPPNG_CRATE = registerBlock("shipping_crate",
+            () -> new ShippingCrateBlock(BlockBehaviour.Properties.copy(Blocks.CHEST).strength(0.1f).noOcclusion()), ModCreativeModeTabs.FARM_BLOCK_TAB);
 
 
 

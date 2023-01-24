@@ -1,4 +1,4 @@
-package com.tompkins_development.forge.farming_valley.capabilities.coins;
+package com.tompkins_development.forge.farming_valley.capabilities.coin;
 
 import com.tompkins_development.forge.farming_valley.enums.Season;
 import net.minecraft.nbt.CompoundTag;

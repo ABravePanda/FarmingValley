@@ -5,13 +5,15 @@
   "item.farmingvalley.garlic_seeds" : "Garlic Seeds",
   "item.farmingvalley.parsnip_seeds" : "Parsnip Seeds",
 
+  "item.farmingvalley.john_spawn_egg" : "John Spawn Egg",
+  "item.farmingvalley.pierre_spawn_egg" : "Pierre Spawn Egg",
+
   "tooltip.farmingvalley.seasons.SPRING" : "§aSpring",
   "tooltip.farmingvalley.seasons.SUMMER" : "§eSummer",
   "tooltip.farmingvalley.seasons.FALL" : "§cFall",
   "tooltip.farmingvalley.seasons.WINTER" : "§bWinter",
 
   "tooltip.farmingvalley.growthdays" : "§7Days:",
-
 
   "sounds.farmingvalley.rooster" : "Rooster Crow Sound",
 

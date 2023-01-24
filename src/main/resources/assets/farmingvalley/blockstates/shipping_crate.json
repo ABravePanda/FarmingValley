@@ -1,0 +1,5 @@
+{
+  "variants" : {
+    "": { "model": "farmingvalley:block/shipping_crate" }
+  }
+}

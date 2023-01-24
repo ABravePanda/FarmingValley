@@ -1,6 +1,6 @@
-package com.tompkins_development.forge.farming_valley.capabilities.coins;
+package com.tompkins_development.forge.farming_valley.capabilities.crates;
 
-import com.tompkins_development.forge.farming_valley.capabilities.season.SeasonAndDay;
+import com.tompkins_development.forge.farming_valley.capabilities.coin.Coins;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraftforge.common.capabilities.Capability;
@@ -12,37 +12,37 @@ import net.minecraftforge.common.util.LazyOptional;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CoinsCapabilityProvider implements ICapabilityProvider, INBTSerializable<CompoundTag> {
+public class ShippingCrateCapabilityProvider implements ICapabilityProvider, INBTSerializable<CompoundTag> {
 
-    public static Capability<Coins> COINS = CapabilityManager.get(new CapabilityToken<Coins>() {});
+    public static Capability<ShippingCrate> SHIPPING_CRATE = CapabilityManager.get(new CapabilityToken<ShippingCrate>() {});
 
-    private Coins coins = null;
-    private LazyOptional<Coins> optional = LazyOptional.of(this::createCoins);
+    private ShippingCrate shippingCrate = null;
+    private LazyOptional<ShippingCrate> optional = LazyOptional.of(this::createShippingCrate);
 
-    private Coins createCoins() {
-        if(this.coins == null) {
-            this.coins = new Coins();
+    private ShippingCrate createShippingCrate() {
+        if(this.shippingCrate == null) {
+            this.shippingCrate = new ShippingCrate();
         }
 
-        return this.coins;
+        return this.shippingCrate;
     }
 
     @NotNull
     @Override
     public <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
-        if(cap == COINS) return optional.cast();
+        if(cap == SHIPPING_CRATE) return optional.cast();
         return LazyOptional.empty();
     }
 
     @Override
     public CompoundTag serializeNBT() {
         CompoundTag nbt = new CompoundTag();
-        createCoins().serializeNBT(nbt);
+        createShippingCrate().serializeNBT(nbt);
         return nbt;
     }
 
     @Override
     public void deserializeNBT(CompoundTag nbt) {
-        createCoins().deserializeNBT(nbt);
+        createShippingCrate().deserializeNBT(nbt);
     }
 }
