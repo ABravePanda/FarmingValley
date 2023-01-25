@@ -21,7 +21,7 @@ public class ModItems {
     //public static final RegistryObject<Item> TOMATO_SEEDS = ITEMS.register("tomato_seeds", () -> new ItemNameBlockItem(ModBlocks.TOMATO_PLANT.get(), new Item.Properties().tab(ModCreativeModTab.FOOD_TAB)));
 
     public static final RegistryObject<Item> SEED_BAG = ITEMS.register("seed_bag", () -> new Item(new Item.Properties().tab(ModCreativeModeTabs.SEED_TAB)));
-    public static final RegistryObject<Item> CAULIFLOWER_SEEDS = ITEMS.register("cauliflower_seeds", () -> new SeedItem(ModBlocks.CAULIFLOWER_PLANT.get(), 12, Season.SPRING));
+    public static final RegistryObject<Item> CAULIFLOWER_SEEDS = ITEMS.register("cauliflower_seeds", () -> new SeedItem(ModBlocks.CAULIFLOWER_PLANT.get(), 12, Season.SPRING, Season.SUMMER));
     public static final RegistryObject<Item> GARLIC_SEEDS = ITEMS.register("garlic_seeds", () -> new SeedItem(ModBlocks.GARLIC_PLANT.get(), 4, Season.SPRING));
     public static final RegistryObject<Item> PARSNIP_SEEDS = ITEMS.register("parsnip_seeds", () -> new SeedItem(ModBlocks.PARSNIP_PLANT.get(), 4, Season.SPRING));
 

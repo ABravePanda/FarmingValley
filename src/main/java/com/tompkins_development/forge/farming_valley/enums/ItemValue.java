@@ -4,7 +4,9 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 
 public enum ItemValue {
-    STONE(Items.STONE, 5);
+    STONE(Items.STONE, 1000),
+    DIRT(Items.DIRT, 100000),
+    GRAVEL(Items.GRAVEL, 1000000);
 
     private Item item;
     private int value;

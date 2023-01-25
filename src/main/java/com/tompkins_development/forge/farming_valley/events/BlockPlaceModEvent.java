@@ -16,6 +16,7 @@ import com.tompkins_development.forge.farming_valley.enums.Season;
 import com.tompkins_development.forge.farming_valley.events.custom.DateChangeEvent;
 import com.tompkins_development.forge.farming_valley.events.custom.PlayersAwakeEvent;
 import com.tompkins_development.forge.farming_valley.events.custom.ShippingCrateSellEvent;
+import com.tompkins_development.forge.farming_valley.items.SeedItem;
 import com.tompkins_development.forge.farming_valley.keybinds.Keybinds;
 import com.tompkins_development.forge.farming_valley.networking.ModMessages;
 import com.tompkins_development.forge.farming_valley.networking.packet.CoinsS2CPacket;
@@ -24,6 +25,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -33,7 +36,9 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
@@ -49,6 +54,8 @@ import net.minecraftforge.fml.common.Mod;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class BlockPlaceModEvent {
 
@@ -86,11 +93,13 @@ public class BlockPlaceModEvent {
             ItemStack itemStack = player.getMainHandItem();
             Item item = itemStack.getItem();
 
-            if(state.getBlock() == ModBlocks.SHIPPNG_CRATE.get()) {
+            if (state.getBlock() == ModBlocks.SHIPPNG_CRATE.get()) {
                 ShippingCrateSellEvent shippingCrateSellEvent = new ShippingCrateSellEvent(itemStack, player);
                 MinecraftForge.EVENT_BUS.post(new ShippingCrateSellEvent(itemStack, player));
                 event.setCanceled(!shippingCrateSellEvent.isCanceled());
             }
+
+//            if(state.getBlock() instanceof )
 //
 //            if (!(state.getBlock() instanceof IPlantable)) return;
 //            if (item == Items.AIR) return;
@@ -117,7 +126,7 @@ public class BlockPlaceModEvent {
                 level.setBlock(pos, ModBlocks.FARM_BLOCK.get().defaultBlockState(), 0);
             }
             event.getPlayer().getCapability(CoinsCapabilityProvider.COINS).ifPresent(coinProvider -> {
-                coinProvider.setBalance(coinProvider.getBalance()+1);
+                coinProvider.setBalance(coinProvider.getBalance() + 1);
             });
 
             event.getPlayer().getCapability(ShippingCrateCapabilityProvider.SHIPPING_CRATE).ifPresent(crateProvider -> {
@@ -173,21 +182,29 @@ public class BlockPlaceModEvent {
         }
 
         @SubscribeEvent
-        public static void onRender(RenderGameOverlayEvent event) {
+        public static void onRender(RenderGameOverlayEvent.Post event) {
             Minecraft minecraft = Minecraft.getInstance();
+            //event.getWindow().scal
+            int width = event.getWindow().getGuiScaledWidth();
+            int height = event.getWindow().getGuiScaledHeight();
+            //System.out.println("Width: " + width + " Height: " + height);
 
+            //Season & Day
             PoseStack poseStack = new PoseStack();
-            poseStack.scale(2,2,2);
+            poseStack.scale(2, 2, 2);
 
             minecraft.font.draw(poseStack, SeasonInstance.getSeason(), 30, 5, Color.HSBtoRGB(125, 100, 100));
 
             PoseStack poseStack2 = new PoseStack();
-            poseStack2.scale(1.2f,1.2f,1.2f);
+            poseStack2.scale(1.2f, 1.2f, 1.2f);
 
             minecraft.font.draw(poseStack2, "Day " + SeasonInstance.day, 50, 25, Color.white.getRGB());
-            //minecraft.font.draw(new PoseStack(), "Time: " + SeasonInstance.time, 7, 21, Color.white.getRGB());
-            minecraft.font.draw(new PoseStack(), "" + ClientBalanceData.getBalance(), 1220, 16, Color.YELLOW.getRGB());
+            minecraft.font.draw(poseStack2, SeasonInstance.time, 50, 35, Color.white.getRGB());
+
+            //Balance
+            minecraft.font.draw(new PoseStack(), "" + ClientBalanceData.getBalance(), width - 65, 16, Color.YELLOW.getRGB());
         }
+
 
         @SubscribeEvent
         public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
@@ -259,7 +276,7 @@ public class BlockPlaceModEvent {
                 } else {
                     seasonProvider.setDay(seasonProvider.getDay() + 1);
                     SeasonInstance.day = seasonProvider.getDay();
-                    MinecraftForge.EVENT_BUS.post(new DateChangeEvent(event.getLevel(), seasonProvider.getDay()-1, seasonProvider.getDay(), seasonProvider.getSeason(), seasonProvider.getSeason()));
+                    MinecraftForge.EVENT_BUS.post(new DateChangeEvent(event.getLevel(), seasonProvider.getDay() - 1, seasonProvider.getDay(), seasonProvider.getSeason(), seasonProvider.getSeason()));
                 }
                 //event.getPlayer().sendMessage(new TextComponent("Season: " + seasonProvider.getSeason() + " Day:" + seasonProvider.getDay()), event.getPlayer().getUUID());
             });
@@ -276,12 +293,12 @@ public class BlockPlaceModEvent {
                 FarmingValleyMod.days++;
             }
 
-            for(Player player : event.getLevel().players()) {
+            for (Player player : event.getLevel().players()) {
                 player.getCapability(ShippingCrateCapabilityProvider.SHIPPING_CRATE).ifPresent(crateProvider -> {
                     int value = crateProvider.getValue();
                     crateProvider.setValue(0);
                     player.getCapability(CoinsCapabilityProvider.COINS).ifPresent(coinProvider -> {
-                        coinProvider.setBalance(coinProvider.getBalance()+value);
+                        coinProvider.setBalance(coinProvider.getBalance() + value);
                         player.sendMessage(new TextComponent("Sold For Value of " + value), null);
                     });
                 });
@@ -312,29 +329,42 @@ public class BlockPlaceModEvent {
                 event.getLevel().getServer().overworld().setWeatherParameters(5500, 0, false, false);
             }
 
-            if(event.didSeasonChange()) {
+            if (event.didSeasonChange()) {
                 Season.switchOverlay(event.getNewSeason());
             }
         }
-    }
 
 
-//        @SubscribeEvent
-//        public static void onRightClickEvent(PlayerInteractEvent.RightClickBlock event) {
-//            Player player = event.getPlayer();
-//            BlockPos pos = event.getPos();
-//            Level level = event.getEntity().getLevel();
-//            BlockState state = level.getBlockState(pos);
-//
-//            if(event.getHand() != InteractionHand.MAIN_HAND) return;
-//            if(event.getSide() != LogicalSide.SERVER) return;
-//
-//            if(state.getBlock() == ModBlocks.FARM_BLOCK.get()) {
-//                if(player.getMainHandItem().getItem() instanceof ItemNameBlockItem) {
+        @SubscribeEvent
+        public static void onRightClickEvent(PlayerInteractEvent.RightClickBlock event) {
+            Player player = event.getPlayer();
+            BlockPos pos = event.getPos();
+            Level level = event.getEntity().getLevel();
+            BlockState state = level.getBlockState(pos);
+            List<Season> seasonList = new ArrayList();
+
+            if (event.getHand() != InteractionHand.MAIN_HAND) return;
+            if (event.getSide() != LogicalSide.SERVER) return;
+
+            if (state.getBlock() == ModBlocks.FARM_BLOCK.get()) {
+                if (player.getMainHandItem().getItem() instanceof SeedItem) {
+                    ItemStack item = player.getMainHandItem().getItem().getDefaultInstance();
+                    CompoundTag tag = item.getTag();
+                    ListTag listTag = tag.getList("seasons", 10);
+                    for (int i = 0; i < listTag.size(); i++) {
+                        CompoundTag compoundTag = (CompoundTag) listTag.get(i);
+                        for (String s : compoundTag.getAllKeys())
+                            for (Season season : Season.values())
+                                if (season.getKey().equalsIgnoreCase(s)) seasonList.add(season);
+                    }
 //                    player.sendMessage(new TextComponent("Test"), null);
 //                    level.setBlock(pos.above(), CropBlock.byItem(player.getMainHandItem().getItem()).defaultBlockState(), 0);
-//                }
-//            } else
-//                player.sendMessage(new TextComponent(state.getBlock() + ""), null);
-//        }
+                    if(!seasonList.contains(SeasonInstance.season)) {
+                        event.setCanceled(true);
+                        System.out.println("Not in season");
+                    }
+                }
+            }
+        }
+    }
 }
