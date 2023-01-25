@@ -1,5 +1,6 @@
 package com.tompkins_development.forge.farming_valley.events;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tompkins_development.forge.farming_valley.FarmingValleyMod;
 import com.tompkins_development.forge.farming_valley.blocks.ModBlocks;
@@ -10,9 +11,9 @@ import com.tompkins_development.forge.farming_valley.capabilities.crates.Shippin
 import com.tompkins_development.forge.farming_valley.capabilities.season.SeasonCapabilityProvider;
 import com.tompkins_development.forge.farming_valley.capabilities.season.SeasonInstance;
 import com.tompkins_development.forge.farming_valley.capabilities.sleeping.SleepingCapabilityProvider;
-import com.tompkins_development.forge.farming_valley.entity.ModEntityTypes;
-import com.tompkins_development.forge.farming_valley.entity.custom.JohnEntity;
+import com.tompkins_development.forge.farming_valley.client.ModOverlays;
 import com.tompkins_development.forge.farming_valley.enums.Season;
+import com.tompkins_development.forge.farming_valley.events.custom.DateChangeEvent;
 import com.tompkins_development.forge.farming_valley.events.custom.PlayersAwakeEvent;
 import com.tompkins_development.forge.farming_valley.events.custom.ShippingCrateSellEvent;
 import com.tompkins_development.forge.farming_valley.keybinds.Keybinds;
@@ -20,8 +21,11 @@ import com.tompkins_development.forge.farming_valley.networking.ModMessages;
 import com.tompkins_development.forge.farming_valley.networking.packet.CoinsS2CPacket;
 import com.tompkins_development.forge.farming_valley.sounds.ModSounds;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
@@ -29,22 +33,22 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.client.gui.GuiUtils;
+import net.minecraftforge.client.gui.OverlayRegistry;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.event.entity.player.*;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.common.Mod;
+import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
-import java.util.List;
 
 public class BlockPlaceModEvent {
 
@@ -170,10 +174,19 @@ public class BlockPlaceModEvent {
 
         @SubscribeEvent
         public static void onRender(RenderGameOverlayEvent event) {
-            Minecraft.getInstance().font.draw(new PoseStack(), "Season: " + SeasonInstance.getSeason(), 2, 3, Color.white.getRGB());
-            Minecraft.getInstance().font.draw(new PoseStack(), "Day: " + SeasonInstance.day, 2, 12, Color.white.getRGB());
-            Minecraft.getInstance().font.draw(new PoseStack(), "Time: " + SeasonInstance.time, 2, 21, Color.white.getRGB());
-            Minecraft.getInstance().font.draw(new PoseStack(), "Coins: " + ClientBalanceData.getBalance(), 2, 30, Color.white.getRGB());
+            Minecraft minecraft = Minecraft.getInstance();
+
+            PoseStack poseStack = new PoseStack();
+            poseStack.scale(2,2,2);
+
+            minecraft.font.draw(poseStack, SeasonInstance.getSeason(), 30, 5, Color.HSBtoRGB(125, 100, 100));
+
+            PoseStack poseStack2 = new PoseStack();
+            poseStack2.scale(1.2f,1.2f,1.2f);
+
+            minecraft.font.draw(poseStack2, "Day " + SeasonInstance.day, 50, 25, Color.white.getRGB());
+            //minecraft.font.draw(new PoseStack(), "Time: " + SeasonInstance.time, 7, 21, Color.white.getRGB());
+            minecraft.font.draw(new PoseStack(), "" + ClientBalanceData.getBalance(), 1220, 16, Color.YELLOW.getRGB());
         }
 
         @SubscribeEvent
@@ -182,6 +195,8 @@ public class BlockPlaceModEvent {
             event.getPlayer().getLevel().getCapability(SeasonCapabilityProvider.SEASON_AND_DAY).ifPresent(seasonProvider -> {
                 SeasonInstance.season = seasonProvider.getSeason();
                 SeasonInstance.day = seasonProvider.getDay();
+                ModOverlays.disableSeasonOverlays();
+                Season.switchOverlay(seasonProvider.getSeason());
             });
         }
 
@@ -231,16 +246,20 @@ public class BlockPlaceModEvent {
         public static void onPlayerAwake(PlayersAwakeEvent event) {
             if (event.getLevel().isClientSide()) return;
             event.getLevel().getCapability(SeasonCapabilityProvider.SEASON_AND_DAY).ifPresent(seasonProvider -> {
-                if (seasonProvider.getSeason() == null)
+                if (seasonProvider.getSeason() == null) {
                     seasonProvider.setSeason(Season.SPRING);
+                }
                 if (seasonProvider.getDay() >= seasonProvider.getSeason().getDays()) {
                     seasonProvider.setDay(1);
+                    Season currentSeason = seasonProvider.getSeason();
                     seasonProvider.setSeason(Season.getNextSeason(seasonProvider.getSeason()));
                     SeasonInstance.season = seasonProvider.getSeason();
                     SeasonInstance.day = seasonProvider.getDay();
+                    MinecraftForge.EVENT_BUS.post(new DateChangeEvent(event.getLevel(), 1, 1, seasonProvider.getSeason(), currentSeason));
                 } else {
                     seasonProvider.setDay(seasonProvider.getDay() + 1);
                     SeasonInstance.day = seasonProvider.getDay();
+                    MinecraftForge.EVENT_BUS.post(new DateChangeEvent(event.getLevel(), seasonProvider.getDay()-1, seasonProvider.getDay(), seasonProvider.getSeason(), seasonProvider.getSeason()));
                 }
                 //event.getPlayer().sendMessage(new TextComponent("Season: " + seasonProvider.getSeason() + " Day:" + seasonProvider.getDay()), event.getPlayer().getUUID());
             });
@@ -281,6 +300,20 @@ public class BlockPlaceModEvent {
                 player.connection.teleport(pos.getX(), pos.getY(), pos.getZ(), 0, 0);
                 player.startSleepInBed(pos);
                 //player.startSleeping(pos);
+            }
+        }
+
+        @SubscribeEvent
+        public static void dateChangeEvent(DateChangeEvent event) {
+            if (event.getNewDay() % 3 == 0) {
+                System.out.println("Weather");
+                event.getLevel().getServer().overworld().setWeatherParameters(0, 5500, true, false);
+            } else {
+                event.getLevel().getServer().overworld().setWeatherParameters(5500, 0, false, false);
+            }
+
+            if(event.didSeasonChange()) {
+                Season.switchOverlay(event.getNewSeason());
             }
         }
     }
